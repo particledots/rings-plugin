@@ -21,7 +21,15 @@ First configure downloads JUCE 8.0.6. With `COPY_PLUGIN_AFTER_BUILD` on, the AU 
 `~/Library/Audio/Plug-Ins/Components/` and the VST3 in `~/Library/Audio/Plug-Ins/VST3/`.
 Then in Logic: Settings > Plug-in Manager > rescan, or run `killall -9 AudioComponentRegistrar`.
 It shows up as "particledots: Unofficial Rings". The AU is declared as a *MIDI-controlled effect*
-(`aumf`), so Logic offers it in the MIDI-controlled-effects slot of a channel strip (needed to receive MIDI notes).
+(`aumf`). In Logic this means two places to load it:
+
+* **To play it from a MIDI keyboard:** create a **Software Instrument** track, click the **Instrument** slot, and choose
+  *Audio Units > AU MIDI-controlled Effects > particledots: Unofficial Rings*. Leave Exciter on Internal and Strum on MIDI notes.
+  (Confirmed working in Logic on the M4 Mac mini.)
+* **To resonate another track's audio:** in the same setup, set Exciter to Audio input and pick the source track in the plug-in's
+  Side Chain menu (top right of the plug-in window); set that source track's output to No Output to avoid doubling.
+  The Side Chain route is untested. Loading it in an ordinary **Audio FX** slot also works as a plain effect
+  (confirmed: another synth's audio resonated through it), but it gets no MIDI notes there.
 
 An unsigned local build may need `xattr -dr com.apple.quarantine` on the bundle, or ad-hoc signing:
 `codesign --force --deep -s - "<bundle>"`.
@@ -58,9 +66,10 @@ Velocity is ignored (Rings has no velocity), and note-offs are ignored (Rings ha
 * MIDI note-ons are placed sample-accurately, but the DSP strums on 24-sample block boundaries (0.5 ms), as the module does.
 * **Verified here:** the DSP wrapper (`engine_test`, 87 combinations at 44.1/48/96 kHz: all six models x 1/2/4 voices, audio exciter,
   audio-onset and manual strum, all six string-synth effects, knob extremes) produces finite, bounded, non-silent output; the VST3
-  builds on Linux. **Not verified:** the AU build and the macOS universal build (that is what the GitHub Actions run is for),
-  loading in Logic on the M4 mini or the Intel Mac, MIDI notes arriving in a real host, and how closely it sounds like the hardware.
-  The tests check "not broken", not "sounds right". No A/B against a module was possible.
+  builds on Linux. The GitHub Actions macOS build (AU + VST3) passes. **Confirmed by the owner in Logic on the M4 Mac mini:** it loads,
+  plays from MIDI notes in the Software Instrument slot, and the Structure/Damping etc. knobs behave like the module's.
+  **Not verified:** loading on the Intel Mac (macOS 12.7), the VST3 in a host, the Side Chain route, and a careful A/B of how closely
+  it sounds like the hardware. The automated tests check "not broken", not "sounds right".
 * The model and effect names come from the firmware source's own enums and my reading of the code, not from listening.
 * The UI is a basic custom panel (knobs, menus). It is functional rather than polished.
 

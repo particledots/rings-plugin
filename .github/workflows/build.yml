@@ -43,8 +43,12 @@ jobs:
              (adjust the path if you unzipped elsewhere; this clears the "downloaded from internet" block)
           3. Copy "Unofficial Rings.component" to  ~/Library/Audio/Plug-Ins/Components/
              Copy "Unofficial Rings.vst3"       to  ~/Library/Audio/Plug-Ins/VST3/
-          4. In Logic: Settings > Plug-in Manager > rescan. Look for "particledots: Unofficial Rings"
-             (put it in a MIDI-controlled effect slot so it gets your MIDI notes).
+          4. In Logic: Settings > Plug-in Manager > rescan.
+          5. To PLAY it from a MIDI keyboard: make a Software Instrument track, click its Instrument slot, and choose
+             Audio Units > AU MIDI-controlled Effects > particledots: Unofficial Rings.
+             (It is not in the Audio FX slot's MIDI path. In the Audio FX slot it works only as a plain effect, with no MIDI notes.)
+          6. To resonate another track's audio instead: in the plug-in, set Exciter to "Audio input" and choose that
+             track in the plug-in's Side Chain menu (top right of its window).
           TXT
           ditto -c -k --keepParent dist Rings-macOS.zip
 
