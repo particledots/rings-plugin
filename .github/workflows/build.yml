@@ -1,0 +1,54 @@
+name: Build plugin (macOS)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:      # adds a "Run workflow" button in the Actions tab
+
+jobs:
+  build-macos:
+    runs-on: macos-14     # Apple silicon runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCOPY_PLUGIN_AFTER_BUILD=OFF -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Build engine test, then run it
+        run: |
+          cmake --build build --target engine_test -j4
+          ./build/engine_test
+
+      - name: Build AU + VST3
+        run: cmake --build build --target Rings_AU Rings_VST3 -j4
+
+      - name: Ad-hoc sign (lets Apple silicon load an unsigned build)
+        run: |
+          for b in build/Rings_artefacts/Release/AU/*.component build/Rings_artefacts/Release/VST3/*.vst3; do
+            codesign --force --deep -s - "$b"
+          done
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp -R build/Rings_artefacts/Release/AU/*.component dist/
+          cp -R build/Rings_artefacts/Release/VST3/*.vst3 dist/
+          lipo -archs dist/*.component/Contents/MacOS/*
+          # Show the minimum macOS version baked into each slice (should say 11.0):
+          for a in arm64 x86_64; do echo "== $a"; lipo -thin $a dist/*.component/Contents/MacOS/* -output /tmp/slice_$a; otool -l /tmp/slice_$a | grep -A4 -E "LC_BUILD_VERSION|LC_VERSION_MIN" | grep -E "minos|version"; done
+          cat > dist/INSTALL.txt <<'TXT'
+          1. Unzip.
+          2. Open Terminal and run:   xattr -dr com.apple.quarantine ~/Downloads/Rings-macOS/*
+             (adjust the path if you unzipped elsewhere; this clears the "downloaded from internet" block)
+          3. Copy "Unofficial Rings.component" to  ~/Library/Audio/Plug-Ins/Components/
+             Copy "Unofficial Rings.vst3"       to  ~/Library/Audio/Plug-Ins/VST3/
+          4. In Logic: Settings > Plug-in Manager > rescan. Look for "particledots: Unofficial Rings"
+             (put it in a MIDI-controlled effect slot so it gets your MIDI notes).
+          TXT
+          ditto -c -k --keepParent dist Rings-macOS.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rings-macOS
+          path: Rings-macOS.zip
