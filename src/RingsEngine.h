@@ -7,6 +7,11 @@
 
 namespace rings { class Part; class StringSynthPart; class Strummer; }
 
+// The module firmware keeps its DSP objects in globals, i.e. zeroed memory, and some of them rely on that (members that are
+// never explicitly initialised). A plain `new` returns whatever junk the heap held, which can crash or silence the plug-in
+// depending on what the process happened to allocate earlier. These objects are therefore always built in zero-filled memory.
+template <typename T> struct ZeroedDeleter { void operator() (T*) const; };
+
 class RingsEngine
 {
 public:
@@ -53,9 +58,9 @@ private:
     void applyConfig (const Params& p);
     void runBlocks (const Params& p);
 
-    std::unique_ptr<rings::Part> part;
-    std::unique_ptr<rings::StringSynthPart> synth;
-    std::unique_ptr<rings::Strummer> strummer;
+    std::unique_ptr<rings::Part, ZeroedDeleter<rings::Part>> part;
+    std::unique_ptr<rings::StringSynthPart, ZeroedDeleter<rings::StringSynthPart>> synth;
+    std::unique_ptr<rings::Strummer, ZeroedDeleter<rings::Strummer>> strummer;
     std::vector<uint16_t> reverbBuf;
 
     double hostRate = 48000.0;

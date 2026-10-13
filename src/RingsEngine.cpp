@@ -1,7 +1,9 @@
 #include "RingsEngine.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
+#include <new>
 #include "rings/dsp/part.h"
 #include "rings/dsp/strummer.h"
 #include "rings/dsp/string_synth_part.h"
@@ -18,8 +20,27 @@ namespace
     constexpr int kUnquantizedBase = 36;
 }
 
+namespace
+{
+    // calloc, not new + memset: with a memset before the constructor, GCC treats the old contents as dead and deletes it
+    // (lifetime dead-store elimination), which silently brings the junk back.
+    template <typename T>
+    std::unique_ptr<T, ZeroedDeleter<T>> makeZeroed()
+    {
+        void* mem = std::calloc (1, sizeof (T));
+        if (mem == nullptr) throw std::bad_alloc();
+        return std::unique_ptr<T, ZeroedDeleter<T>> (new (mem) T());
+    }
+}
+
+template <typename T>
+void ZeroedDeleter<T>::operator() (T* p) const
+{
+    if (p != nullptr) { p->~T(); std::free (static_cast<void*> (p)); }
+}
+
 RingsEngine::RingsEngine()
-    : part (new rings::Part()), synth (new rings::StringSynthPart()), strummer (new rings::Strummer())
+    : part (makeZeroed<rings::Part>()), synth (makeZeroed<rings::StringSynthPart>()), strummer (makeZeroed<rings::Strummer>())
 {
     reverbBuf.assign (32768, 0);
     part->Init (reverbBuf.data());

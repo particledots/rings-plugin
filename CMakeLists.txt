@@ -65,3 +65,8 @@ target_link_libraries(Rings PRIVATE
 # --- Headless test of the DSP wrapper:  cmake --build build --target engine_test && build/engine_test ---
 add_executable(engine_test EXCLUDE_FROM_ALL src/engine_test.cpp)
 target_link_libraries(engine_test PRIVATE rings_core)
+
+
+# --- Model-switching regression test:  JUNK=0xFF build/sweep_test ---
+add_executable(sweep_test EXCLUDE_FROM_ALL src/sweep_test.cpp)
+target_link_libraries(sweep_test PRIVATE rings_core)
