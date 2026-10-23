@@ -18,12 +18,20 @@ public:
     enum Exciter { InternalExciter = 0, AudioExciter = 1 };
     enum StrumSource { StrumMidi = 0, StrumAudioOnset = 1, StrumManual = 2 };
 
+    // Pitch Snap (our addition, not in the module): what the whole Transpose + FM offset settles on.
+    //   Steps     - octaves and fifths across the control range (Transpose +-36 plus FM +-48 reaches +-84):
+    //               0, 7, 12, 19, 24, 31, 36, 43, 48, 55, 60, 67, 72, 79, 84 (both directions)
+    //   Semitones - whole semitones
+    enum PitchSnap { SnapOff = 0, SnapSteps = 1, SnapSemitones = 2 };
+    static float snapPitch (float semitones, int mode);   // Off returns its input unchanged
+
     struct Params
     {
         // The four main knobs (0..1), same meaning as the module.
         float structure = 0.25f, brightness = 0.5f, damping = 0.5f, position = 0.5f;
         int   transpose = 0;            // semitones, added to the played pitch
         float fm = 0.0f;                // semitones, -48..48 (the module's FM input after its attenuverter)
+        int   pitchSnap = SnapOff;      // what Transpose + FM settle on (see snapPitch)
         int   polyphony = 1;            // 1, 2 or 4
         int   model = 0;                // resonator model, 0..5 (see README)
         bool  stringSynth = false;      // false = resonator, true = the firmware's string-synth mode

@@ -88,6 +88,25 @@ RingsEditor::RingsEditor (RingsAudioProcessor& p) : AudioProcessorEditor (&p), p
     addChoice (polyphony, "polyphony",    "POLYPHONY",   { "1 voice", "2 voices", "4 voices" });
     addChoice (exciter,   "exciter",      "EXCITER",     { "Internal", "Audio input" });
     addChoice (strum,     "strum_source", "STRUM FROM",  { "MIDI notes", "Audio onset", "Manual button" });
+    addChoice (pitchSnap, "pitch_snap",   "PITCH SNAP",  { "Off", "Steps", "Semitones" });
+    pitchSnap.box.setTooltip ("What Transpose + FM settle on. Steps = octaves and fifths (0, 7, 12, 19, 24 ... up to 84, both directions); "
+                              "Semitones = whole semitones. With Pitch Snap on, FM only matters when it tips the total over a step. "
+                              "The Transpose readout shows the offset that plays.");
+    // With Pitch Snap on, the Transpose readout shows the offset that actually plays (Transpose + FM, snapped).
+    transpose.slider.textFromValueFunction = [this] (double v)
+    {
+        const int mode = (int) proc.apvts.getRawParameterValue ("pitch_snap")->load();
+        if (mode == RingsEngine::SnapOff) return juce::String ((int) std::lround (v));
+        const float total = (float) std::lround (v) + proc.apvts.getRawParameterValue ("fm")->load();
+        const int st = (int) std::lround (RingsEngine::snapPitch (total, mode));
+        return st > 0 ? "+" + juce::String (st) : juce::String (st);
+    };
+    snapReadoutAtt = std::make_unique<juce::ParameterAttachment> (*proc.apvts.getParameter ("pitch_snap"),
+                                                                  [this] (float) { transpose.slider.updateText(); });
+    fmReadoutAtt = std::make_unique<juce::ParameterAttachment> (*proc.apvts.getParameter ("fm"),
+                                                                [this] (float) { transpose.slider.updateText(); });
+    snapReadoutAtt->sendInitialUpdate();
+    fmReadoutAtt->sendInitialUpdate();
 
     for (auto* b : { &strumBtn, &monoOut }) addAndMakeVisible (*b);
     strumBtnAtt = std::make_unique<ButtonAtt> (proc.apvts, "strum_btn", strumBtn);
@@ -186,6 +205,7 @@ void RingsEditor::resized()
     placeChoice (polyphony, juce::Rectangle<int> (24, 356, 130, 48));
     placeChoice (exciter,   juce::Rectangle<int> (166, 356, 130, 48));
     placeChoice (strum,     juce::Rectangle<int> (308, 356, 150, 48));
+    placeChoice (pitchSnap, juce::Rectangle<int> (470, 356, 150, 48));
     strumBtn.setBounds (24, 416, 100, 36);
     monoOut.setBounds  (134, 416, 100, 36);
 }
