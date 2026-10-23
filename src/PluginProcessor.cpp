@@ -34,6 +34,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout RingsAudioProcessor::createL
     p.push_back (unit ("position",   "Position",   0.5f));
     p.push_back (std::make_unique<API> (juce::ParameterID { "transpose", 1 }, "Transpose", -36, 36, 0,
                  juce::AudioParameterIntAttributes().withLabel ("st")));
+    // Added in 0.2.0. Off = exactly the 0.1.0 sound; old projects load with it Off.
+    p.push_back (std::make_unique<APC> (juce::ParameterID { "pitch_snap", 2 }, "Pitch Snap",
+                 juce::StringArray { "Off", "Steps", "Semitones" }, 0));
     p.push_back (std::make_unique<APF> (juce::ParameterID { "fm", 1 }, "FM",
                  juce::NormalisableRange<float> (-48.f, 48.f, 0.01f), 0.f,
                  juce::AudioParameterFloatAttributes().withLabel ("st")));
@@ -83,6 +86,7 @@ RingsEngine::Params RingsAudioProcessor::readParams() const
     p.structure = v ("structure"); p.brightness = v ("brightness"); p.damping = v ("damping"); p.position = v ("position");
     p.transpose = (int) std::lround (v ("transpose"));
     p.fm = v ("fm");
+    p.pitchSnap = (int) v ("pitch_snap");
     const int polyChoice = (int) v ("polyphony");
     p.polyphony = polyChoice == 0 ? 1 : (polyChoice == 1 ? 2 : 4);
     p.stringSynth = (int) v ("mode") == 1;

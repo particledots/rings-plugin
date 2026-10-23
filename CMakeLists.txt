@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(RingsPlugin VERSION 0.1.0)
+project(RingsPlugin VERSION 0.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -70,3 +70,13 @@ target_link_libraries(engine_test PRIVATE rings_core)
 # --- Model-switching regression test:  JUNK=0xFF build/sweep_test ---
 add_executable(sweep_test EXCLUDE_FROM_ALL src/sweep_test.cpp)
 target_link_libraries(sweep_test PRIVATE rings_core)
+
+# --- Pitch Snap test (function, same pitch as Off at the snapped value, all models; JUCE-free):
+#     cmake --build build --target pitch_snap_test && build/pitch_snap_test ---
+add_executable(pitch_snap_test EXCLUDE_FROM_ALL src/pitch_snap_test.cpp)
+target_link_libraries(pitch_snap_test PRIVATE rings_core)
+
+# --- Processor-level test (the real parameters -> engine wiring, state; no host or window):  build/plugin_test ---
+add_executable(plugin_test EXCLUDE_FROM_ALL src/plugin_test.cpp)
+target_compile_definitions(plugin_test PRIVATE JucePlugin_Name="Unofficial Rings" JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+target_link_libraries(plugin_test PRIVATE Rings juce::juce_audio_utils juce::juce_recommended_config_flags)

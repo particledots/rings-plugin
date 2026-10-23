@@ -43,6 +43,7 @@ Headless DSP test (any OS): `cmake --build build --target engine_test && build/e
 | Structure, Brightness, Damping, Position | the four main knobs, smoothed the way the firmware smooths its pots |
 | Transpose | the FREQUENCY knob's job: semitones added to the pitch (rounded to whole semitones, as the firmware does). Range ±36, default 0 |
 | FM | the FM input after its attenuverter, ±48 semitones (there is no CV in a plugin, so it is a plain knob) |
+| Pitch Snap (0.2.0, my addition, not in the module) | **Off** (the sound is exactly 0.1.0), **Steps** or **Semitones**. Acts on Transpose + FM taken together. Steps are octaves and fifths across the controls' combined range: 0, 7, 12, 19, 24, 31, 36, 43, 48, 55, 60, 67, 72, 79, 84, both signs. Semitones rounds to whole notes. With it on, FM only matters when it tips the total over a step. The Transpose readout shows the offset that plays. Old projects load with it Off. |
 | Polyphony | 1 / 2 / 4 voices |
 | Mode | **Resonator** (the normal Rings) or **String synth** (the string-synth part that is also in the firmware) |
 | Resonator Model | Modal resonator, Sympathetic strings, Modulated/inharmonic string, FM voice, Sympathetic strings (quantized), String + reverb. These are the six models in the firmware's `ResonatorModel` list; the first three are the standard ones, the last three are the firmware's extra ("bonus") models |

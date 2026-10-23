@@ -105,6 +105,18 @@ void RingsEngine::applyConfig (const Params& p)
     }
 }
 
+float RingsEngine::snapPitch (float semitones, int mode)
+{
+    if (mode == SnapSemitones) return std::round (semitones);
+    if (mode != SnapSteps) return semitones;
+    static const float kSteps[] = { 0.f, 7.f, 12.f, 19.f, 24.f, 31.f, 36.f, 43.f, 48.f, 55.f, 60.f, 67.f, 72.f, 79.f, 84.f };   // mirrored below zero
+    const float a = std::fabs (semitones);
+    float best = kSteps[0];
+    for (float d : kSteps)
+        if (std::fabs (a - d) < std::fabs (a - best)) best = d;
+    return semitones < 0.f ? -best : best;
+}
+
 void RingsEngine::runBlocks (const Params& p)
 {
     using namespace rings;
@@ -149,11 +161,18 @@ void RingsEngine::runBlocks (const Params& p)
         patch.damping    = std::clamp (lpDamping,    0.0f, 1.0f);
         patch.position   = std::clamp (lpPosition,   0.0f, 1.0f);
 
-        const float fmErr = p.fm - fmTracked;       // firmware: snap on big jumps, otherwise glide
-        if (std::fabs (fmErr) >= 0.8f) fmTracked = p.fm; else fmTracked += 0.02f * fmErr;
+        // Pitch Snap: with it on, Transpose and FM are one offset, snapped as a whole and carried by the FM path (the firmware adds
+        // tonic + note + fm, so the sum is what matters); Off is the untouched Transpose-in-tonic / FM-in-fm path.
+        const bool snapOn = p.pitchSnap != SnapOff;
+        const float fmTarget = snapOn ? snapPitch ((float) p.transpose + p.fm, p.pitchSnap) : p.fm;
+        const int tonicOffset = snapOn ? 0 : p.transpose;
+        const float fmLimit = snapOn ? 96.0f : 48.0f;
+
+        const float fmErr = fmTarget - fmTracked;   // firmware: snap on big jumps, otherwise glide
+        if (std::fabs (fmErr) >= 0.8f) fmTracked = fmTarget; else fmTracked += 0.02f * fmErr;
 
         PerformanceState ps;
-        ps.fm = std::clamp (fmTracked, -48.0f, 48.0f);
+        ps.fm = std::clamp (fmTracked, -fmLimit, fmLimit);
         ps.internal_exciter = ! externalExciter;
 
         switch (p.strumSource)
@@ -162,19 +181,19 @@ void RingsEngine::runBlocks (const Params& p)
                 ps.internal_strum = false; ps.internal_note = false;
                 ps.strum = anyStrum != 0;
                 ps.note = note - 12.0f;                      // so that note + tonic = MIDI note + transpose
-                ps.tonic = 12.0f + (float) p.transpose;
+                ps.tonic = 12.0f + (float) tonicOffset;
                 break;
             case StrumAudioOnset:
                 ps.internal_strum = true; ps.internal_note = true;
                 ps.strum = false;                             // Strummer fills this in from the audio onsets
                 ps.note = 0.0f;
-                ps.tonic = 12.0f + (float) (kUnquantizedBase + p.transpose);
+                ps.tonic = 12.0f + (float) (kUnquantizedBase + tonicOffset);
                 break;
             default:   // StrumManual
                 ps.internal_strum = false; ps.internal_note = true;
                 ps.strum = manualInit && (p.manualStrumState != prevManual);
                 ps.note = 0.0f;
-                ps.tonic = 12.0f + (float) (kUnquantizedBase + p.transpose);
+                ps.tonic = 12.0f + (float) (kUnquantizedBase + tonicOffset);
                 break;
         }
         prevManual = p.manualStrumState; manualInit = true;

@@ -47,7 +47,8 @@ private:
     RingsLookAndFeel laf;
 
     Knob structure, brightness, damping, position, transpose, fm;
-    Choice mode, model, synthFx, polyphony, exciter, strum;
+    Choice mode, model, synthFx, polyphony, exciter, strum, pitchSnap;
+    std::unique_ptr<juce::ParameterAttachment> snapReadoutAtt, fmReadoutAtt;   // keep the Transpose readout in step
 
     juce::ToggleButton strumBtn { "STRUM" }, monoOut { "MONO OUT" };
     std::unique_ptr<ButtonAtt> strumBtnAtt, monoOutAtt;
