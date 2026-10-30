@@ -59,6 +59,11 @@ jobs:
           6. To resonate another track's audio instead: in the plug-in, set Exciter to "Audio input" and choose that
              track in the plug-in's Side Chain menu (top right of its window).
           TXT
+          # Easy installer for Logic (double-click; same file in every Unofficial plugin)
+          cp tools/install/Install-Unofficial-Plugin.command dist/
+          chmod +x dist/Install-Unofficial-Plugin.command
+          if [ -f dist/INSTALL.txt ]; then printf '\nEASY INSTALL (Logic, Audio Unit): double-click Install-Unofficial-Plugin.command in this folder. It asks for your Mac password once.\n' >> dist/INSTALL.txt; fi
+          [ -x dist/Install-Unofficial-Plugin.command ] || { echo "::error::PACKAGE missing Install-Unofficial-Plugin.command"; exit 1; }
           ditto -c -k --keepParent dist Rings-macOS.zip
 
       - uses: actions/upload-artifact@v4
