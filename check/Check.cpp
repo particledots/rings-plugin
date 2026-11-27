@@ -69,7 +69,7 @@ static juce::StringArray dumpLayout (RingsAudioProcessor& proc)
         juce::String line;
         line << p->paramID << "|" << p->getName (100) << "|v" << p->getVersionHint() << "|" << type
              << "|" << juce::String::formatted ("%.6g %.6g %.6g %.6g", range.start + 0.0f, range.end + 0.0f, range.interval + 0.0f, range.skew + 0.0f)
-             << "|default " << juce::String::formatted ("%.6g", p->convertFrom0to1 (p->getDefaultValue()) + 0.0f);
+             << "|default " << juce::String::formatted ("%.6g", std::round (p->convertFrom0to1 (p->getDefaultValue()) * 1.0e4f) / 1.0e4f + 0.0f);
         if (auto* c = dynamic_cast<juce::AudioParameterChoice*> (p))
             line << "|" << c->choices.joinIntoString (";");
         out.add (line);
