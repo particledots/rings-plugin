@@ -1,0 +1,15 @@
+structure|Structure|v1|float|0 1 0.0001 1|default 0.25
+brightness|Brightness|v1|float|0 1 0.0001 1|default 0.5
+damping|Damping|v1|float|0 1 0.0001 1|default 0.5
+position|Position|v1|float|0 1 0.0001 1|default 0.5
+transpose|Transpose|v1|int|-36 36 1 1|default 0
+pitch_snap|Pitch Snap|v2|choice|0 2 1 1|default 0|Off;Steps;Semitones
+fm|FM|v1|float|-48 48 0.01 1|default 0
+polyphony|Polyphony|v1|choice|0 2 1 1|default 0|1 voice;2 voices;4 voices
+mode|Mode|v1|choice|0 1 1 1|default 0|Resonator;String synth
+model|Resonator Model|v1|choice|0 5 1 1|default 0|Modal resonator;Sympathetic strings;Modulated/inharmonic string;FM voice;Sympathetic strings (quantized);String + reverb
+synth_fx|String Synth FX|v1|choice|0 5 1 1|default 4|Formant filter;Chorus;Reverb;Formant filter 2;Ensemble;Reverb 2
+exciter|Exciter|v1|choice|0 1 1 1|default 0|Internal;Audio input
+strum_source|Strum|v1|choice|0 2 1 1|default 0|MIDI notes;Audio onset;Manual button
+strum_btn|Strum Button|v1|bool|0 1 1 1|default 0
+mono_out|Mono Out|v1|bool|0 1 1 1|default 0

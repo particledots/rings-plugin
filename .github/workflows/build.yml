@@ -32,6 +32,19 @@ jobs:
       - name: Build AU + VST3
         run: cmake --build build --target Rings_AU Rings_VST3 -j4
 
+      - name: Check the plug-in's identity (must not change: saved projects find the plug-in by it)
+        run: |
+          P=build/Rings_artefacts/Release/AU/Wrongs.component/Contents/Info.plist
+          [ -f "$P" ] || { echo "::error::AU bundle Wrongs.component not found"; ls build/Rings_artefacts/Release/AU; exit 1; }
+          get() { /usr/libexec/PlistBuddy -c "Print :AudioComponents:0:$1" "$P"; }
+          ok=0
+          [ "$(get type)" = "aumf" ] || { echo "::error::AU type is $(get type), expected aumf"; ok=1; }
+          [ "$(get subtype)" = "Ring" ] || { echo "::error::AU subtype is $(get subtype), expected Ring"; ok=1; }
+          [ "$(get manufacturer)" = "Ptdt" ] || { echo "::error::AU manufacturer is $(get manufacturer), expected Ptdt"; ok=1; }
+          [ "$(get name)" = "particledots: Wrongs" ] || { echo "::error::AU name is $(get name), expected particledots: Wrongs"; ok=1; }
+          echo "AU identity: $(get type) $(get subtype) $(get manufacturer) / $(get name)"
+          exit $ok
+
       - name: Ad-hoc sign (lets Apple silicon load an unsigned build)
         run: |
           for b in build/Rings_artefacts/Release/AU/*.component build/Rings_artefacts/Release/VST3/*.vst3; do
@@ -47,16 +60,22 @@ jobs:
           # Show the minimum macOS version baked into each slice (should say 11.0):
           for a in arm64 x86_64; do echo "== $a"; lipo -thin $a dist/*.component/Contents/MacOS/* -output /tmp/slice_$a; otool -l /tmp/slice_$a | grep -A4 -E "LC_BUILD_VERSION|LC_VERSION_MIN" | grep -E "minos|version"; done
           cat > dist/INSTALL.txt <<'TXT'
+          WRONGS (was "Unofficial Rings"; same plug-in inside, new name and a new panel)
           1. Unzip.
-          2. Open Terminal and run:   xattr -dr com.apple.quarantine ~/Downloads/Rings-macOS/*
+          2. FIRST delete the old copies, because the old and new share the same plug-in identity and Logic would
+             otherwise get confused:
+               ~/Library/Audio/Plug-Ins/Components/Unofficial Rings.component
+               ~/Library/Audio/Plug-Ins/VST3/Unofficial Rings.vst3
+             (also in /Library/Audio/Plug-Ins/... if you ever put them there)
+          3. Open Terminal and run:   xattr -dr com.apple.quarantine ~/Downloads/Wrongs-macOS/*
              (adjust the path if you unzipped elsewhere; this clears the "downloaded from internet" block)
-          3. Copy "Unofficial Rings.component" to  ~/Library/Audio/Plug-Ins/Components/
-             Copy "Unofficial Rings.vst3"       to  ~/Library/Audio/Plug-Ins/VST3/
-          4. In Logic: Settings > Plug-in Manager > rescan.
-          5. To PLAY it from a MIDI keyboard: make a Software Instrument track, click its Instrument slot, and choose
-             Audio Units > AU MIDI-controlled Effects > particledots: Unofficial Rings.
+          4. Copy "Wrongs.component" to  ~/Library/Audio/Plug-Ins/Components/
+             Copy "Wrongs.vst3"       to  ~/Library/Audio/Plug-Ins/VST3/
+          5. In Logic: Settings > Plug-in Manager > rescan.
+          6. To PLAY it from a MIDI keyboard: make a Software Instrument track, click its Instrument slot, and choose
+             Audio Units > AU MIDI-controlled Effects > particledots: Wrongs.
              (It is not in the Audio FX slot's MIDI path. In the Audio FX slot it works only as a plain effect, with no MIDI notes.)
-          6. To resonate another track's audio instead: in the plug-in, set Exciter to "Audio input" and choose that
+          7. To resonate another track's audio instead: in the plug-in, set Exciter to "Audio input" and choose that
              track in the plug-in's Side Chain menu (top right of its window).
           TXT
           # Easy installer for Logic (double-click; same file in every Unofficial plugin)
@@ -64,12 +83,12 @@ jobs:
           chmod +x dist/Install-Unofficial-Plugin.command
           if [ -f dist/INSTALL.txt ]; then printf '\nEASY INSTALL (Logic, Audio Unit): double-click Install-Unofficial-Plugin.command in this folder. It asks for your Mac password once.\n' >> dist/INSTALL.txt; fi
           [ -x dist/Install-Unofficial-Plugin.command ] || { echo "::error::PACKAGE missing Install-Unofficial-Plugin.command"; exit 1; }
-          ditto -c -k --keepParent dist Rings-macOS.zip
+          ditto -c -k --keepParent dist Wrongs-macOS.zip
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Rings-macOS
-          path: Rings-macOS.zip
+          name: Wrongs-macOS
+          path: Wrongs-macOS.zip
 
       # After the upload on purpose: a problem here shows up red but can never stop the plug-in artifact from being produced.
       - name: Processor test (Pitch Snap through the real parameters)
@@ -80,3 +99,34 @@ jobs:
           ./build/plugin_test > plugin_test.log 2>&1; rc=$?; cat plugin_test.log
           if [ $rc -ne 0 ]; then grep -n -E "FAIL" plugin_test.log | head -15 | while IFS= read -r l; do echo "::error::plugin_test: $l"; done; fi
           exit $rc
+
+  # The panel and the plug-in layer without a host (control list, saved projects, panel fit, title pixels, drawing cost).
+  # Also writes pictures of the panel. Runs on Linux because it needs no Mac.
+  plugin-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxext-dev libfreetype-dev libfontconfig1-dev libgl1-mesa-dev
+      - name: Configure
+        run: cmake -S . -B check-build -DCMAKE_BUILD_TYPE=Release -DRINGS_BUILD_PLUGIN=OFF -DRINGS_BUILD_CHECK=ON
+      - name: Build RingsCheck
+        run: cmake --build check-build --target RingsCheck -j4
+      - name: Run RingsCheck
+        shell: bash {0}
+        run: |
+          CHK=$(find check-build -name RingsCheck -type f | head -1)
+          "$CHK" > check.log 2>&1; rc=$?; cat check.log
+          if [ $rc -ne 0 ]; then grep -n "FAIL" check.log | head -15 | while IFS= read -r l; do echo "::error::RingsCheck: $l"; done; fi
+          exit $rc
+      - name: Panel pictures
+        run: |
+          CHK=$(find check-build -name RingsCheck -type f | head -1)
+          "$CHK" --snapshot panel-pictures
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: panel-pictures
+          path: panel-pictures
