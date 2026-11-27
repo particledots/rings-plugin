@@ -32,7 +32,7 @@ jobs:
       - name: Build AU + VST3
         run: cmake --build build --target Rings_AU Rings_VST3 -j4
 
-      - name: Check the plug-in's identity (must not change: saved projects find the plug-in by it)
+      - name: "Check the plug-in identity (must not change; saved projects find the plug-in by it)"
         run: |
           P=build/Rings_artefacts/Release/AU/Wrongs.component/Contents/Info.plist
           [ -f "$P" ] || { echo "::error::AU bundle Wrongs.component not found"; ls build/Rings_artefacts/Release/AU; exit 1; }
