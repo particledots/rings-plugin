@@ -68,8 +68,8 @@ static juce::StringArray dumpLayout (RingsAudioProcessor& proc)
         const auto range = p->getNormalisableRange();
         juce::String line;
         line << p->paramID << "|" << p->getName (100) << "|v" << p->getVersionHint() << "|" << type
-             << "|" << juce::String::formatted ("%.6g %.6g %.6g %.6g", range.start, range.end, range.interval, range.skew)
-             << "|default " << juce::String::formatted ("%.6g", p->convertFrom0to1 (p->getDefaultValue()));
+             << "|" << juce::String::formatted ("%.6g %.6g %.6g %.6g", range.start + 0.0f, range.end + 0.0f, range.interval + 0.0f, range.skew + 0.0f)
+             << "|default " << juce::String::formatted ("%.6g", p->convertFrom0to1 (p->getDefaultValue()) + 0.0f);
         if (auto* c = dynamic_cast<juce::AudioParameterChoice*> (p))
             line << "|" << c->choices.joinIntoString (";");
         out.add (line);
@@ -119,7 +119,8 @@ static void testControlList (const juce::File& goldenDir)
     for (int i = 0; i < juce::jmin (now.size(), golden.size()); ++i)
     {
         if (now[i] == golden[i]) ++same;
-        else std::printf ("  control %d differs:\n    now:    %s\n    golden: %s\n", i, now[i].toRawUTF8(), golden[i].toRawUTF8());
+        else { std::printf ("  control %d differs:\n    now:    %s\n    golden: %s\n", i, now[i].toRawUTF8(), golden[i].toRawUTF8());
+               CHECK (false, "control %d now [%s] golden [%s]", i, now[i].toRawUTF8(), golden[i].toRawUTF8()); }
     }
     CHECK (same == golden.size(), "every control is exactly as in 0.2.0 (same id, order, version, range, default, menu); %d of %d", same, golden.size());
     std::printf ("control list: %d of %d controls identical to 0.2.0\n", same, golden.size());
