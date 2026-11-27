@@ -1,12 +1,16 @@
-# Unofficial Rings — AU / VST3 port (work in progress)
+# Wrongs (formerly Unofficial Rings) — AU / VST3 port (work in progress)
 
 A plugin wrapper around the Mutable Instruments **Rings** DSP, taken from the open-source release
 (`pichenettes/eurorack`, `rings/dsp` + `stmlib/`, stmlib at the commit that repo pins). Not a Mutable Instruments product.
 Don't contact Emilie Gillet or Mutable Instruments about it.
 
+**Renamed in 0.3.0:** the plug-in is now called **Wrongs** (the panel title is WRONGS). Only the name changed: the plug-in codes (`aumf` / `Ring` / `Ptdt`),
+every control and the saved-project format are as in 0.2.0, so saved projects load. Delete the old `Unofficial Rings.component` and
+`Unofficial Rings.vst3` before installing, because old and new share the same codes.
+
 ## Easiest: let GitHub build it
 Push this folder to a GitHub repo. `.github/workflows/build.yml` builds the AU and VST3 on a macOS runner;
-download `Rings-macOS` from the run's Artifacts (Actions tab > latest run). `INSTALL.txt` inside covers the install.
+download `Wrongs-macOS` from the run's Artifacts (Actions tab > latest run). `INSTALL.txt` inside covers the install.
 Builds are universal (arm64 + x86_64), minimum macOS 11.
 
 ## Build it yourself (macOS, for Logic Pro)
@@ -20,11 +24,11 @@ cmake --build build --config Release -j
 First configure downloads JUCE 8.0.6. With `COPY_PLUGIN_AFTER_BUILD` on, the AU lands in
 `~/Library/Audio/Plug-Ins/Components/` and the VST3 in `~/Library/Audio/Plug-Ins/VST3/`.
 Then in Logic: Settings > Plug-in Manager > rescan, or run `killall -9 AudioComponentRegistrar`.
-It shows up as "particledots: Unofficial Rings". The AU is declared as a *MIDI-controlled effect*
+It shows up as "particledots: Wrongs". The AU is declared as a *MIDI-controlled effect*
 (`aumf`). In Logic this means two places to load it:
 
 * **To play it from a MIDI keyboard:** create a **Software Instrument** track, click the **Instrument** slot, and choose
-  *Audio Units > AU MIDI-controlled Effects > particledots: Unofficial Rings*. Leave Exciter on Internal and Strum on MIDI notes.
+  *Audio Units > AU MIDI-controlled Effects > particledots: Wrongs*. Leave Exciter on Internal and Strum on MIDI notes.
   (Confirmed working in Logic on the M4 Mac mini.)
 * **To resonate another track's audio:** in the same setup, set Exciter to Audio input and pick the source track in the plug-in's
   Side Chain menu (top right of the plug-in window); set that source track's output to No Output to avoid doubling.
@@ -72,7 +76,17 @@ Velocity is ignored (Rings has no velocity), and note-offs are ignored (Rings ha
   **Not verified:** loading on the Intel Mac (macOS 12.7), the VST3 in a host, the Side Chain route, and a careful A/B of how closely
   it sounds like the hardware. The automated tests check "not broken", not "sounds right".
 * The model and effect names come from the firmware source's own enums and my reading of the code, not from listening.
-* The UI is a basic custom panel (knobs, menus). It is functional rather than polished.
+* **The panel (0.3.0)** is in the "gold sections" look of the Anamnesis plugin: black panel, gold hairline frames (EXCITE, PITCH, VOICE, OUTPUT)
+  with titles set into the top line, cream knob caps in gold range arcs, blue lamps for what is on or chosen. It is fixed at 680 x 596.
+  Flow lines show only true routing: Transpose and FM feed Pitch Snap (they are added, then snapped); the Strum button is the "Manual button"
+  choice of Strum From; the EXCITE and PITCH sections feed VOICE, which feeds OUTPUT. Model and Synth FX share one slot and follow Mode, as before.
+  Cosmetic only: no control was renamed, reordered, re-ranged or removed.
+* **Checks (RingsCheck, runs on every push on Linux):** the 15 controls match 0.2.0 exactly (id, order, range, default, menu names); a project saved by 0.2.0
+  and one from before Pitch Snap load correctly; the panel opens at 680 x 596; the title fits its area (measured, and in the drawn pixels at 100% and 200%);
+  every control is on the panel; every text fits (51 measured); clicks reach the controls; Mode swaps Model / Synth FX; value texts match; the 30 Hz update is
+  much lighter than drawing the whole panel. It also writes panel pictures (artifact `panel-pictures`).
+  **Confirmed by the owner (Intel Mac, macOS 12.7, Logic):** the Wrongs test list passed ("works"): installs, panel looks right, Mode swaps Model / Synth FX, plays from MIDI.
+  **Not separately reported:** the M4 Mac mini with the new panel, and an old project's lookup under the new name; hearing difference vs hardware is unchanged from 0.2.0.
 
 ## Licensing
 
