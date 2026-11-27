@@ -7,6 +7,7 @@
 - Fixed: Model / Synth FX now swap with Mode using the value the panel is told, not a stored value that may not be updated yet.
 - Added RingsCheck (host-less check of controls, saved projects, panel fit, title pixels, drawing cost) and panel pictures to the build workflow;
   added an AU identity check to the macOS build.
+- Status: CI green (macOS build + RingsCheck, 134 checks). Owner tested on the Intel Mac in Logic and reported "works".
 
 ## 0.2.0
 - Pitch Snap (Off / Steps / Semitones) on Transpose + FM.

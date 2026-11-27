@@ -85,7 +85,8 @@ Velocity is ignored (Rings has no velocity), and note-offs are ignored (Rings ha
   and one from before Pitch Snap load correctly; the panel opens at 680 x 596; the title fits its area (measured, and in the drawn pixels at 100% and 200%);
   every control is on the panel; every text fits (51 measured); clicks reach the controls; Mode swaps Model / Synth FX; value texts match; the 30 Hz update is
   much lighter than drawing the whole panel. It also writes panel pictures (artifact `panel-pictures`).
-  **Not verified until the owner tests:** that it looks right in Logic on the M4 and the Intel Mac, and that an old Logic project finds the plug-in under its new name.
+  **Confirmed by the owner (Intel Mac, macOS 12.7, Logic):** the Wrongs test list passed ("works"): installs, panel looks right, Mode swaps Model / Synth FX, plays from MIDI.
+  **Not separately reported:** the M4 Mac mini with the new panel, and an old project's lookup under the new name; hearing difference vs hardware is unchanged from 0.2.0.
 
 ## Licensing
 
